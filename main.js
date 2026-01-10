@@ -36,7 +36,7 @@ function createWindows() {
     // Create Palette Window
     paletteWindow = new BrowserWindow({
         width: 70, // Slight bit wider for comfort
-        height: 600,
+        height: 700,
         x: 20,
         y: 100,
         frame: false,
