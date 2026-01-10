@@ -1,0 +1,133 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+    font-family: 'Segoe UI', sans-serif;
+    user-select: none;
+}
+
+.toolbar {
+    background: rgba(20, 20, 20, 0.90);
+    backdrop-filter: blur(15px);
+    border-radius: 16px;
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    width: 48px;
+    margin: 5px auto;
+    -webkit-app-region: drag;
+}
+
+.drag-handle {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.2);
+    cursor: grab;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 2px;
+}
+
+button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 0;
+    border-radius: 10px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 38px;
+    height: 38px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    -webkit-app-region: no-drag;
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: scale(1.05);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+button.active {
+    background: #3b82f6;
+    /* Modern Blue */
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+}
+
+button svg {
+    width: 22px;
+    height: 22px;
+}
+
+.divider {
+    width: 24px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    margin: 2px 0;
+}
+
+.action-btn.destroy:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+/* Color Palette */
+.color-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 0;
+    -webkit-app-region: no-drag;
+}
+
+.color-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    /* default border */
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.color-btn:hover {
+    transform: scale(1.1);
+}
+
+.color-btn.active {
+    border-color: #fff;
+    transform: scale(1.15);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    width: 100%;
+    justify-content: center;
+}
+
+.row button {
+    width: 20px;
+    height: 28px;
+    border-radius: 6px;
+}
+
+.row button svg {
+    width: 16px;
+    height: 16px;
+}

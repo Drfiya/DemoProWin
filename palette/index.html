@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="toolbar">
+        <div class="drag-handle">:::</div>
+        <button id="cursor" class="tool-btn active" title="Cursor (Stop Drawing)">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M7 2l12 11.2-5.8.5 3.3 7.3-2.2.9-3.2-7.4-4.4 4V2z" />
+            </svg>
+        </button>
+        <button id="pen" class="tool-btn" title="Pen">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+            </svg>
+        </button>
+        <button id="arrow" class="tool-btn" title="Arrow">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z" />
+            </svg>
+        </button>
+        <button id="rect" class="tool-btn" title="Rectangle">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M3 3h18v18H3V3zm2 2v14h14V5H5z" />
+            </svg>
+        </button>
+        <button id="circle" class="tool-btn" title="Circle">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+            </svg>
+        </button>
+        <div class="color-palette">
+            <div class="color-btn active" data-color="#ef4444" style="background-color: #ef4444;" title="Red"></div>
+            <div class="color-btn" data-color="#3b82f6" style="background-color: #3b82f6;" title="Blue"></div>
+            <div class="color-btn" data-color="#10b981" style="background-color: #10b981;" title="Green"></div>
+            <div class="color-btn" data-color="#f59e0b" style="background-color: #f59e0b;" title="Yellow"></div>
+            <div class="color-btn" data-color="#ffffff" style="background-color: #ffffff;" title="White"></div>
+        </div>
+        <hr class="divider">
+        <div class="row">
+            <button id="undo" class="action-btn" title="Undo">
+                <svg viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+                </svg>
+            </button>
+            <button id="redo" class="action-btn" title="Redo">
+                <svg viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M18.4 10.6C16.55 9 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z" />
+                </svg>
+            </button>
+        </div>
+        <button id="clear" class="action-btn" title="Clear Screen">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+            </svg>
+        </button>
+        <button id="quit" class="action-btn destroy" title="Quit App">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+            </svg>
+        </button>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+
+</html>

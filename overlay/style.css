@@ -1,0 +1,19 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+}
+
+#drawingCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* We want the canvas to receive pointer events only when we are drawing.
+       Electron main process handles the window-level hit testing,
+       but this ensures CSS conforms. */
+    cursor: crosshair;
+}
