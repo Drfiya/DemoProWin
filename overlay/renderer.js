@@ -8,20 +8,46 @@ let savedImageData = null;
 
 // Dynamic resize
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    // Note: resizing clears canvas. In a persistent app, we'd restore image data.
-    // For now, let's assume screen size doesn't change mid-draw frequently.
+    const dpr = window.devicePixelRatio || 1;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // Save current content if any
+    let tempCanvas = null;
+    if (canvas.width > 0 && canvas.height > 0) {
+        tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    }
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+
+    ctx.scale(dpr, dpr);
+
+    // Restore Config after resize
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 4;
+
+    // Restore content
+    if (tempCanvas) {
+        ctx.drawImage(tempCanvas, 0, 0, width, height);
+    }
 }
 
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 // Drawing Config
+// Initial defaults - will be updated by IPC/resize
 ctx.lineCap = 'round';
 ctx.lineJoin = 'round';
 ctx.lineWidth = 4;
-ctx.strokeStyle = '#ef4444'; // default red
+ctx.strokeStyle = '#ef4444';
 
 // History
 let history = [];
@@ -30,9 +56,13 @@ let historyIndex = -1;
 function saveState() {
     historyIndex++;
     if (historyIndex < history.length) {
-        history.length = historyIndex; // Remove future history if we diverge
+        history.length = historyIndex;
     }
-    history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    const stateCanvas = document.createElement('canvas');
+    stateCanvas.width = canvas.width;
+    stateCanvas.height = canvas.height;
+    stateCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    history.push(stateCanvas);
 }
 
 // IPC Listeners
@@ -60,14 +90,18 @@ window.electronAPI.onMessage('clear', () => {
 window.electronAPI.onMessage('undo', () => {
     if (historyIndex > 0) {
         historyIndex--;
-        ctx.putImageData(history[historyIndex], 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const dpr = window.devicePixelRatio || 1;
+        ctx.drawImage(history[historyIndex], 0, 0, canvas.width / dpr, canvas.height / dpr);
     }
 });
 
 window.electronAPI.onMessage('redo', () => {
     if (historyIndex < history.length - 1) {
         historyIndex++;
-        ctx.putImageData(history[historyIndex], 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const dpr = window.devicePixelRatio || 1;
+        ctx.drawImage(history[historyIndex], 0, 0, canvas.width / dpr, canvas.height / dpr);
     }
 });
 
@@ -87,9 +121,11 @@ function startDrawing(e) {
     startX = e.offsetX;
     startY = e.offsetY;
 
-    // Save state for shapes preview (this is distinct from history stack)
-    // We actually just want to capture the CURRENT canvas state before we draw on top of it for preview
-    savedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    // Save current state for shapes preview
+    savedImageData = document.createElement('canvas');
+    savedImageData.width = canvas.width;
+    savedImageData.height = canvas.height;
+    savedImageData.getContext('2d').drawImage(canvas, 0, 0);
 
     // For pen, start immediately
     if (currentTool === 'pen') {
@@ -105,18 +141,21 @@ function draw(e) {
     const x = e.offsetX;
     const y = e.offsetY;
 
+    const dpr = window.devicePixelRatio || 1;
     if (currentTool === 'pen') {
         ctx.lineTo(x, y);
         ctx.stroke();
     } else if (currentTool === 'rect') {
-        // Restore then Draw
-        ctx.putImageData(savedImageData, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(savedImageData, 0, 0, canvas.width / dpr, canvas.height / dpr);
         ctx.strokeRect(startX, startY, x - startX, y - startY);
     } else if (currentTool === 'arrow') {
-        ctx.putImageData(savedImageData, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(savedImageData, 0, 0, canvas.width / dpr, canvas.height / dpr);
         drawArrow(startX, startY, x, y);
     } else if (currentTool === 'circle') {
-        ctx.putImageData(savedImageData, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(savedImageData, 0, 0, canvas.width / dpr, canvas.height / dpr);
         const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
         ctx.beginPath();
         ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
@@ -132,6 +171,7 @@ function stopDrawing() {
     }
     // Save state to history after drawing completes
     saveState();
+    window.electronAPI.sendMessage('stroke-added');
 }
 
 function drawArrow(fromX, fromY, toX, toY) {

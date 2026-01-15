@@ -2,43 +2,50 @@ const { app, BrowserWindow, ipcMain, screen } = require('electron')
 const path = require('path')
 
 let paletteWindow
-let overlayWindow
+let overlayWindows = []
+let lastActiveOverlay = null
 
 function createWindows() {
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize
+    const displays = screen.getAllDisplays()
 
-    // Create Overlay Window (Fullscreen, Transparent)
-    // We use 'screen-saver' level for overlay ensuring it is very high, but we will put palette higher if possible or same.
-    // Actually, standard 'floating' or 'pop-up-menu' might be better for palette.
+    displays.forEach((display) => {
+        const overlay = new BrowserWindow({
+            x: display.bounds.x,
+            y: display.bounds.y,
+            width: display.bounds.width,
+            height: display.bounds.height,
+            transparent: true,
+            frame: false,
+            alwaysOnTop: true,
+            skipTaskbar: true,
+            hasShadow: false,
+            enableLargerThanScreen: true,
+            webPreferences: {
+                preload: path.join(__dirname, 'preload.js'),
+                contextIsolation: true,
+                backgroundThrottling: false
+            }
+        })
 
-    overlayWindow = new BrowserWindow({
-        fullscreen: true,
-        transparent: true,
-        frame: false,
-        alwaysOnTop: true,
-        skipTaskbar: true,
-        hasShadow: false,
-        enableLargerThanScreen: true,
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true,
-            backgroundThrottling: false
-        }
+        overlay.setIgnoreMouseEvents(true, { forward: true })
+        overlay.loadFile('overlay/index.html')
+        overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+
+        // Ensure it stays on top of normal windows but BELOW the palette
+        overlay.setAlwaysOnTop(true, 'floating')
+
+        overlayWindows.push(overlay)
+
+        overlay.webContents.on('before-input-event', handleInput)
     })
 
-    // Set overlay to be click-through initially
-    overlayWindow.setIgnoreMouseEvents(true, { forward: true })
-    overlayWindow.loadFile('overlay/index.html')
-
-    // Move to top level explicitly
-    overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
-
     // Create Palette Window
+    const primaryDisplay = screen.getPrimaryDisplay()
     paletteWindow = new BrowserWindow({
-        width: 70, // Slight bit wider for comfort
+        width: 70,
         height: 700,
-        x: 20,
-        y: 100,
+        x: primaryDisplay.bounds.x + 20,
+        y: primaryDisplay.bounds.y + 100,
         frame: false,
         transparent: true,
         alwaysOnTop: true,
@@ -52,21 +59,16 @@ function createWindows() {
 
     paletteWindow.loadFile('palette/index.html')
     paletteWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
-
-    // Ensure palette stays on top of overlay
-    paletteWindow.setAlwaysOnTop(true, 'screen-saver')
-    // Note: on Windows, 'screen-saver' is one of the highest.
-
-    // Handle Keyboard Shortcuts (Esc to Clear + Switch to Cursor)
-    const handleInput = (event, input) => {
-        if (input.type === 'keyDown' && input.key === 'Escape') {
-            if (overlayWindow) overlayWindow.webContents.send('clear')
-            setTool('cursor')
-        }
-    }
+    paletteWindow.setAlwaysOnTop(true, 'screen-saver') // Much higher than 'floating'
 
     paletteWindow.webContents.on('before-input-event', handleInput)
-    overlayWindow.webContents.on('before-input-event', handleInput)
+}
+
+function handleInput(event, input) {
+    if (input.type === 'keyDown' && input.key === 'Escape') {
+        overlayWindows.forEach(win => win.webContents.send('clear'))
+        setTool('cursor')
+    }
 }
 
 app.whenReady().then(() => {
@@ -85,20 +87,14 @@ app.on('window-all-closed', () => {
 // IPC Handler
 // Helper to set tool from either IPC or Main logic
 function setTool(tool) {
-    if (!overlayWindow) return
-
     if (tool === 'cursor') {
-        // Pass clicks through
-        overlayWindow.setIgnoreMouseEvents(true, { forward: true })
+        overlayWindows.forEach(win => win.setIgnoreMouseEvents(true, { forward: true }))
     } else {
-        // Capture clicks for drawing
-        overlayWindow.setIgnoreMouseEvents(false)
+        overlayWindows.forEach(win => win.setIgnoreMouseEvents(false))
     }
 
-    // Inform overlay of tool change
-    overlayWindow.webContents.send('tool-change', tool)
+    overlayWindows.forEach(win => win.webContents.send('tool-change', tool))
 
-    // Inform palette of tool change (to update UI)
     if (paletteWindow) {
         paletteWindow.webContents.send('tool-change', tool)
     }
@@ -109,19 +105,25 @@ ipcMain.on('tool-change', (event, tool) => {
 })
 
 ipcMain.on('color-change', (event, color) => {
-    if (!overlayWindow) return
-    overlayWindow.webContents.send('color-change', color)
+    overlayWindows.forEach(win => win.webContents.send('color-change', color))
+})
+
+ipcMain.on('stroke-added', (event) => {
+    lastActiveOverlay = event.sender
 })
 
 ipcMain.on('action', (event, action) => {
     if (action === 'quit') app.quit()
     if (action === 'undo' || action === 'redo') {
-        if (overlayWindow) overlayWindow.webContents.send(action)
+        if (lastActiveOverlay) {
+            lastActiveOverlay.send(action)
+        } else {
+            // Fallback: send to all if we don't know who's active
+            overlayWindows.forEach(win => win.webContents.send(action))
+        }
     }
     if (action === 'clear') {
-        if (overlayWindow) {
-            overlayWindow.webContents.send('clear')
-        }
+        overlayWindows.forEach(win => win.webContents.send('clear'))
     }
 })
 
